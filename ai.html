@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioFit AI - 맞춤형 운동 처방전</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Inter & Noto Sans KR) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans KR', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            black: '#090A0F',
+                            dark: '#12141C',
+                            card: '#1A1D29',
+                            primary: '#10B981', // Emerald
+                            secondary: '#84CC16', // Lime
+                            accent: '#06B6D4', // Cyan
+                            warning: '#EF4444' // Red
+                        }
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar to match dark gym vibe */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090A0F;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2A2E3D;
+            border-radius: 99px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #10B981;
+        }
+        .neo-shadow {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-brand-black text-slate-200 min-h-screen font-sans selection:bg-brand-primary/30 selection:text-brand-primary">
+
+    <!-- Top Decorative Gradient Header -->
+    <div class="absolute top-0 left-0 w-full h-[350px] bg-gradient-to-b from-brand-primary/10 via-brand-accent/5 to-transparent pointer-events-none z-0"></div>
+
+    <div class="relative z-10 max-w-7xl mx-auto px-4 py-6 md:py-10 flex flex-col min-h-screen justify-between">
+        
+        <!-- Header Section -->
+        <header class="flex flex-col md:flex-row items-center justify-between border-b border-slate-800/80 pb-6 mb-8 gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-primary to-brand-secondary flex items-center justify-center shadow-lg shadow-brand-primary/20">
+                    <i class="fa-solid fa-heart-pulse text-2xl text-black animate-pulse"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white flex items-center gap-2">
+                        BioFit <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-accent">AI</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 mt-0.5">내 신체 메트릭 분석 및 맞춤형 AI 안전 운동 처방</p>
+                </div>
+            </div>
+
+            <!-- Global Quick Stats & Sound config -->
+            <div class="flex items-center space-x-3">
+                <button id="soundToggleBtn" onclick="toggleAudioEngine()" class="px-3.5 py-2 bg-brand-card hover:bg-slate-800 border border-slate-800 rounded-xl text-xs flex items-center space-x-2 transition-all duration-300">
+                    <i id="soundIcon" class="fa-solid fa-volume-high text-brand-primary"></i>
+                    <span class="text-slate-300">효과음 켬</span>
+                </button>
+                <div class="px-4 py-2 bg-brand-card border border-slate-850 rounded-xl text-xs flex items-center space-x-2 text-slate-300">
+                    <span class="w-2.5 h-2.5 rounded-full bg-brand-primary animate-ping"></span>
+                    <span>AI 임상 모델 연동 완료</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tab Navigation Buttons -->
+        <nav class="flex overflow-x-auto gap-2 border-b border-slate-800/50 pb-3 mb-6 scrollbar-none">
+            <button onclick="switchMainTab('tab-profile')" id="btn-tab-profile" class="tab-btn active px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 flex items-center space-x-2 bg-brand-card border border-brand-primary/30 text-white shadow-lg shadow-brand-primary/5">
+                <i class="fa-solid fa-user-gear text-brand-primary"></i>
+                <span>1. 신체 정보 입력</span>
+            </button>
+            <button onclick="switchMainTab('tab-dashboard')" id="btn-tab-dashboard" class="tab-btn px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 flex items-center space-x-2 bg-transparent border border-transparent text-slate-400 hover:text-slate-200">
+                <i class="fa-solid fa-chart-simple text-brand-secondary"></i>
+                <span>2. 신체 대사 분석</span>
+            </button>
+            <button onclick="switchMainTab('tab-prescription')" id="btn-tab-prescription" class="tab-btn px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 flex items-center space-x-2 bg-transparent border border-transparent text-slate-400 hover:text-slate-200">
+                <i class="fa-solid fa-file-medical text-brand-accent animate-bounce"></i>
+                <span>3. AI 안전 운동 처방전</span>
+            </button>
+            <button onclick="switchMainTab('tab-timer')" id="btn-tab-timer" class="tab-btn px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 flex items-center space-x-2 bg-transparent border border-transparent text-slate-400 hover:text-slate-200">
+                <i class="fa-solid fa-stopwatch text-yellow-500"></i>
+                <span>4. 트레이닝 타이머</span>
+            </button>
+            <button onclick="switchMainTab('tab-logs')" id="btn-tab-logs" class="tab-btn px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 flex items-center space-x-2 bg-transparent border border-transparent text-slate-400 hover:text-slate-200">
+                <i class="fa-solid fa-calendar-check text-indigo-400"></i>
+                <span>5. 피트니스 다이어리</span>
+            </button>
+        </nav>
+
+        <!-- Main Panel -->
+        <main class="flex-grow grid grid-cols-1 gap-6 mb-8">
+
+            <!-- TAB 1: Bio Profiler Form -->
+            <div id="tab-profile" class="tab-content block">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    
+                    <!-- Form Side -->
+                    <div class="lg:col-span-8 bg-brand-card border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xl">
+                        <div class="mb-6">
+                            <span class="text-xs font-bold tracking-wider text-brand-primary uppercase bg-brand-primary/10 px-3 py-1 rounded-full border border-brand-primary/20">METRICS ENROLLMENT</span>
+                            <h2 class="text-xl md:text-2xl font-bold mt-3 text-white">당신의 바이오 데이터를 알려주세요</h2>
+                            <p class="text-xs md:text-sm text-slate-400 mt-1">입력된 실제 건강 지표와 관절 가동 범위를 바탕으로, 관절 부하를 피할 수 있는 맞춤 정밀 솔루션이 활성화됩니다.</p>
+                        </div>
+
+                        <!-- Form -->
+                        <form id="profileForm" onsubmit="handleProfileSubmit(event)" class="space-y-6">
+                            
+                            <!-- Key Numbers Row -->
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1.5 font-medium">성별</label>
+                                    <select id="userGender" class="w-full bg-brand-black border border-slate-800 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-brand-primary text-white">
+                                        <option value="male">남성</option>
+                                        <option value="female" selected>여성</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1.5 font-medium">나이 (세)</label>
+                                    <input type="number" id="userAge" value="29" min="1" max="120" required class="w-full bg-brand-black border border-slate-800 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-brand-primary text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1.5 font-medium">신장 (cm)</label>
+                                    <input type="number" step="0.1" id="userHeight" value="162.5" min="100" max="250" required class="w-full bg-brand-black border border-slate-800 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-brand-primary text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1.5 font-medium">체중 (kg)</label>
+                                    <input type="number" step="0.1" id="userWeight" value="58.2" min="30" max="200" required class="w-full bg-brand-black border border-slate-800 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-brand-primary text-white">
+                                </div>
+                            </div>
+
+                            <!-- Composition Row (Optional but better) -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-800/40 pt-4">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1.5 font-medium">체지방률 (%) <span class="text-[10px] text-slate-500">(선택 사항)</span></label>
+                                    <input type="number" step="0.1" id="userBodyFat" placeholder="미입력시 자동 추정 계산" class="w-full bg-brand-black border border-slate-800 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-brand-primary text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1.5 font-medium">골격근량 (kg) <span class="text-[10px] text-slate-500">(선택 사항)</span></label>
+                                    <input type="number" step="0.1" id="userMuscle" placeholder="미입력시 자동 추정 계산" class="w-full bg-brand-black border border-slate-800 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-brand-primary text-white">
+                                </div>
+                            </div>
+
+                            <!-- Activity Level and Goal -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1.5 font-medium">평소 활동량 수준</label>
+                                    <select id="userActivity" class="w-full bg-brand-black border border-slate-800 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-brand-primary text-white">
+                                        <option value="1.2">비활동적 (운동 거의 안 함, 주로 앉아 지냄)</option>
+                                        <option value="1.375" selected>가벼운 활동 (주 1~3회 가벼운 스포츠/걷기)</option>
+                                        <option value="1.55">보통 수준 (주 3~5회 적당한 강도의 스포츠/일반 노동)</option>
+                                        <option value="1.725">활동적 (주 6~7회 강도 높은 트레이닝/육체 노동)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1.5 font-medium">지향하는 운동 핵심 목표</label>
+                                    <select id="userGoal" class="w-full bg-brand-black border border-slate-800 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-brand-primary text-white">
+                                        <option value="loss" selected>체중 감량 & 군살 제거 (지방 연소 극대화)</option>
+                                        <option value="gain">근력 강화 & 벌크업 (체중 및 근량 증가)</option>
+                                        <option value="posture">자세 교정 & 관절 재활 (코어/밸런스 집중)</option>
+                                        <option value="stamina">심폐 건강 & 기초 체력 상승 (지구력 중심)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Critical Risk & Joint conditions selector -->
+                            <div class="border-t border-slate-800/50 pt-4">
+                                <label class="block text-xs text-slate-400 mb-3 font-semibold text-brand-warning">
+                                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> 현재 지병이나 특별히 약한 관절/부위 (복수 선택 가능)
+                                </label>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                                    <label class="flex items-center space-x-2.5 p-3 bg-brand-black border border-slate-850 rounded-xl cursor-pointer hover:border-brand-warning/40 transition-colors duration-200">
+                                        <input type="checkbox" name="painSpot" value="허리 (디스크/요통)" class="w-4 h-4 rounded text-brand-warning focus:ring-0 bg-slate-900 border-slate-800">
+                                        <span class="text-xs text-slate-300">허리 요통/디스크</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2.5 p-3 bg-brand-black border border-slate-850 rounded-xl cursor-pointer hover:border-brand-warning/40 transition-colors duration-200">
+                                        <input type="checkbox" name="painSpot" value="무릎 (관절염/연골손상)" class="w-4 h-4 rounded text-brand-warning focus:ring-0 bg-slate-900 border-slate-800" checked>
+                                        <span class="text-xs text-slate-300">무릎 시림/연골</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2.5 p-3 bg-brand-black border border-slate-850 rounded-xl cursor-pointer hover:border-brand-warning/40 transition-colors duration-200">
+                                        <input type="checkbox" name="painSpot" value="목/어깨 회전근개" class="w-4 h-4 rounded text-brand-warning focus:ring-0 bg-slate-900 border-slate-800">
+                                        <span class="text-xs text-slate-300">목/어깨 결림</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2.5 p-3 bg-brand-black border border-slate-850 rounded-xl cursor-pointer hover:border-brand-warning/40 transition-colors duration-200">
+                                        <input type="checkbox" name="painSpot" value="손목/터널증후군" class="w-4 h-4 rounded text-brand-warning focus:ring-0 bg-slate-900 border-slate-800">
+                                        <span class="text-xs text-slate-300">손목/팔꿈치 약함</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2.5 p-3 bg-brand-black border border-slate-850 rounded-xl cursor-pointer hover:border-brand-warning/40 transition-colors duration-200">
+                                        <input type="checkbox" name="painSpot" value="고혈압" class="w-4 h-4 rounded text-brand-warning focus:ring-0 bg-slate-900 border-slate-800">
+                                        <span class="text-xs text-slate-300">고혈압 환자</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2.5 p-3 bg-brand-black border border-slate-850 rounded-xl cursor-pointer hover:border-brand-warning/40 transition-colors duration-200">
+                                        <input type="checkbox" name="painSpot" value="과체중/고도비만" class="w-4 h-4 rounded text-brand-warning focus:ring-0 bg-slate-900 border-slate-800">
+                                        <span class="text-xs text-slate-300">고도비만 환자</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2.5 p-3 bg-brand-black border border-slate-850 rounded-xl cursor-pointer hover:border-brand-warning/40 transition-colors duration-200">
+                                        <input type="checkbox" name="painSpot" value="만성 피로/무기력" class="w-4 h-4 rounded text-brand-warning focus:ring-0 bg-slate-900 border-slate-800">
+                                        <span class="text-xs text-slate-300">체력 무기력증</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2.5 p-3 bg-brand-black border border-slate-850 rounded-xl cursor-pointer hover:border-brand-warning/40 transition-colors duration-200">
+                                        <input type="checkbox" name="painSpot" value="발목 불안정성" class="w-4 h-4 rounded text-brand-warning focus:ring-0 bg-slate-900 border-slate-800">
+                                        <span class="text-xs text-slate-300">발목 쉽게 접지름</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="pt-4">
+                                <button type="submit" class="w-full py-4 bg-gradient-to-r from-brand-primary to-brand-secondary hover:from-emerald-500 hover:to-lime-500 text-black font-extrabold rounded-2xl text-base shadow-lg hover:shadow-brand-primary/20 transition-all duration-300 transform active:scale-95 flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-calculator text-lg"></i>
+                                    <span>대사 분석기 돌리기 & 운동 처방 생성</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Side Advice Guide Card -->
+                    <div class="lg:col-span-4 space-y-6">
+                        <div class="bg-gradient-to-br from-brand-card to-brand-black border border-slate-800/80 rounded-3xl p-6 shadow-md relative overflow-hidden">
+                            <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand-primary/10 rounded-full blur-2xl"></div>
+                            <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-shield-halved text-brand-primary"></i>
+                                <span>부상 Zero 원칙</span>
+                            </h3>
+                            <ul class="space-y-3.5 text-xs text-slate-300 leading-relaxed">
+                                <li class="flex items-start gap-2.5">
+                                    <span class="text-brand-primary font-bold mt-0.5">✓</span>
+                                    <span>잘못된 자세로 100번 스쿼트를 하는 것보다 <strong>단 10번을 바른 각도</strong>로 쪼그려 앉는 것이 안전과 타깃 효과에 낫습니다.</span>
+                                </li>
+                                <li class="flex items-start gap-2.5">
+                                    <span class="text-brand-primary font-bold mt-0.5">✓</span>
+                                    <span>무릎이나 허리에 찌르는 듯한 통증이 느껴진다면, 그것은 세트 완수를 의미하지 않고 <strong>"즉시 정지"</strong>하라는 신경계의 비명입니다.</span>
+                                </li>
+                                <li class="flex items-start gap-2.5">
+                                    <span class="text-brand-primary font-bold mt-0.5">✓</span>
+                                    <span>체지방 연소를 희망할수록 저강도 무한 반복보다 <strong>근력 운동 이후 유산소</strong> 순서로 에너지를 소진해야 탁월한 효과를 누릴 수 있습니다.</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Mini Banner Box -->
+                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center gap-4">
+                            <div class="text-4xl">⚡</div>
+                            <div>
+                                <h4 class="text-xs font-bold text-white uppercase">AI Dynamic Prescribing</h4>
+                                <p class="text-[11px] text-slate-400 mt-1 leading-snug">Gemini-3.1-Flash를 기반으로 하여 복합 골격계 통증 유발 패턴 분석을 완벽하게 계산합니다.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB 2: Metabolism & Diet Analysis Dashboard -->
+            <div id="tab-dashboard" class="tab-content hidden">
+                <div class="bg-brand-card border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
+                    <h2 class="text-xl md:text-2xl font-bold text-white mb-2 font-sans">실시간 바이오 스펙트럼 분석</h2>
+                    <p class="text-xs text-slate-400 mb-6">입력한 세부 스펙을 바탕으로 산출된 고유 신체 지표 정보입니다. 이 연소 균형치를 통해 에너지 소비가 구성됩니다.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        
+                        <!-- Card 1: BMI Tracker -->
+                        <div class="bg-brand-black border border-slate-850 p-6 rounded-2xl relative">
+                            <span class="text-slate-400 text-xs">체질량지수 (BMI)</span>
+                            <div class="flex items-baseline space-x-2 mt-2">
+                                <span id="bmiVal" class="text-4xl font-extrabold text-brand-primary">0.0</span>
+                                <span id="bmiClass" class="text-xs font-bold px-2 py-0.5 rounded bg-brand-primary/20 text-brand-primary">분석전</span>
+                            </div>
+                            <div class="w-full bg-slate-900 h-2 rounded-full mt-4 overflow-hidden flex">
+                                <div class="h-full bg-blue-500" style="width: 25%"></div>
+                                <div class="h-full bg-emerald-500" style="width: 25%"></div>
+                                <div class="h-full bg-yellow-500" style="width: 25%"></div>
+                                <div class="h-full bg-red-500" style="width: 25%"></div>
+                            </div>
+                            <!-- Cursor tracker indicator -->
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-1.5">
+                                <span>저체중(18.5)</span>
+                                <span>정상(23)</span>
+                                <span>과체중(25)</span>
+                                <span>비만</span>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: BMR -->
+                        <div class="bg-brand-black border border-slate-850 p-6 rounded-2xl">
+                            <span class="text-slate-400 text-xs">기초대사량 (BMR)</span>
+                            <div class="flex items-baseline space-x-1 mt-2">
+                                <span id="bmrVal" class="text-3xl font-extrabold text-brand-secondary">0</span>
+                                <span class="text-xs text-slate-400">kcal/일</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+                                <i class="fa-solid fa-circle-info mr-1"></i> 호흡 및 장기 대사를 포함해 생명 유지에 필요한 최소 소비량입니다.
+                            </p>
+                        </div>
+
+                        <!-- Card 3: TDEE -->
+                        <div class="bg-brand-black border border-slate-850 p-6 rounded-2xl">
+                            <span class="text-slate-400 text-xs">일일 총 활동 대사량 (TDEE)</span>
+                            <div class="flex items-baseline space-x-1 mt-2">
+                                <span id="tdeeVal" class="text-3xl font-extrabold text-brand-accent">0</span>
+                                <span class="text-xs text-slate-400">kcal/일</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+                                <i class="fa-solid fa-circle-info mr-1"></i> 평소 활동 수준을 종합한 실질 소모 칼로리입니다. 이 값 이상 먹으면 찌고, 덜 먹으면 빠집니다.
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <!-- Diet Plan Macro Tracker -->
+                    <div class="border-t border-slate-800/60 pt-6">
+                        <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+                            
+                            <!-- Diet Goal Summary text -->
+                            <div class="w-full lg:w-1/3">
+                                <div class="bg-brand-black border border-slate-800 p-5 rounded-2xl">
+                                    <span class="text-xs font-bold text-brand-secondary uppercase">Recommended Calorie Intake</span>
+                                    <h3 class="text-lg font-bold text-white mt-1">오늘의 목표 섭취 열량</h3>
+                                    <div class="my-3 text-3xl font-black text-brand-primary">
+                                        <span id="targetKcal">0</span> <span class="text-sm font-normal text-slate-400">kcal / 하루</span>
+                                    </div>
+                                    <p id="targetGoalText" class="text-xs text-slate-300 leading-relaxed">신체 목표가 체중 감량이므로 TDEE 대비 15% 감량 설계가 유효합니다.</p>
+                                </div>
+                            </div>
+
+                            <!-- Macro visual bars -->
+                            <div class="w-full lg:w-2/3 space-y-4">
+                                <h4 class="text-sm font-bold text-white">필수 3대 핵심 영양소 균형 (단·탄·지)</h4>
+                                
+                                <!-- Carbs -->
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span class="text-slate-400">탄수화물 (Carbohydrates)</span>
+                                        <span class="text-slate-200 font-bold"><span id="macroCarb">0</span>g (<span id="macroCarbKcal">0</span>kcal)</span>
+                                    </div>
+                                    <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden">
+                                        <div id="carbBar" class="h-full bg-brand-accent rounded-full transition-all duration-500" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Protein -->
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span class="text-slate-400">단백질 (Protein) - 근생성 최우선</span>
+                                        <span class="text-slate-200 font-bold"><span id="macroProtein">0</span>g (<span id="macroProteinKcal">0</span>kcal)</span>
+                                    </div>
+                                    <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden">
+                                        <div id="proteinBar" class="h-full bg-brand-primary rounded-full transition-all duration-500" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Fats -->
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span class="text-slate-400">지방 (Healthy Fats)</span>
+                                        <span class="text-slate-200 font-bold"><span id="macroFat">0</span>g (<span id="macroFatKcal">0</span>kcal)</span>
+                                    </div>
+                                    <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden">
+                                        <div id="fatBar" class="h-full bg-brand-secondary rounded-full transition-all duration-500" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB 3: AI Prescription Result -->
+            <div id="tab-prescription" class="tab-content hidden">
+                <div class="bg-brand-card border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl relative min-h-[400px]">
+                    
+                    <!-- Loading View -->
+                    <div id="prescriptionLoading" class="absolute inset-0 bg-brand-card/95 backdrop-blur-md rounded-3xl z-30 flex flex-col items-center justify-center p-6 text-center">
+                        <div class="relative w-20 h-20 mb-4 flex items-center justify-center">
+                            <div class="absolute inset-0 rounded-full border-4 border-slate-850 border-t-brand-primary animate-spin"></div>
+                            <i class="fa-solid fa-brain text-2xl text-brand-primary animate-pulse"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white">Gemini AI 맞춤 운동 처방 조립 중...</h3>
+                        <p class="text-xs text-slate-400 mt-1 max-w-sm">당신의 무릎 손목 가동 가동성과 비만도를 대조하여 물리치료학적 정밀 가이드라인을 추론하고 있습니다.</p>
+                    </div>
+
+                    <!-- Active Medical Prescription Layout -->
+                    <div id="prescriptionData" class="space-y-6">
+                        
+                        <!-- Header Box -->
+                        <div class="border-b border-slate-800 pb-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <span class="px-2.5 py-1 text-[10px] uppercase font-bold tracking-widest bg-brand-warning/15 text-brand-warning rounded border border-brand-warning/20">PREVENTATIVE PRESCRIPTION</span>
+                                <h3 class="text-xl md:text-2xl font-extrabold text-white mt-2">안전 수칙 기반 개인형 운동 처방 안내</h3>
+                                <p class="text-xs text-slate-400 mt-1">이 가이드는 사용자의 관절 약점 부위를 회피하는 고도화된 타겟 트레이닝 가이드입니다.</p>
+                            </div>
+                            <button onclick="window.print()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-xl text-xs text-slate-300 font-bold transition-colors duration-200">
+                                <i class="fa-solid fa-print mr-1"></i> 보고서 프린트하기
+                            </button>
+                        </div>
+
+                        <!-- Brief Diagnostic -->
+                        <div class="bg-brand-black border border-slate-850 p-5 rounded-2xl flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center text-xl text-brand-primary flex-shrink-0">
+                                <i class="fa-solid fa-user-doctor"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-400">종합 신체 평가 코멘트</h4>
+                                <p id="aiSummary" class="text-sm text-slate-200 mt-1 font-serif leading-relaxed">
+                                    신체 정보 분석이 시작되지 않았습니다. 신체 정보 입력 탭에서 폼을 제출하십시오.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Main Core Columns: Required Exercises vs Dangerous Exercises -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            
+                            <!-- Left: Recommended (MUST DO) -->
+                            <div class="bg-emerald-950/20 border border-brand-primary/30 rounded-2xl p-6">
+                                <h4 class="text-base font-bold text-brand-primary flex items-center gap-2 mb-4">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <span>지금 시급히 필요한 처방 운동</span>
+                                </h4>
+                                <div id="requiredExerciseList" class="space-y-4">
+                                    <!-- Dynamic items insert here -->
+                                </div>
+                            </div>
+
+                            <!-- Right: Danger (AVOID) -->
+                            <div class="bg-red-950/20 border border-brand-warning/30 rounded-2xl p-6">
+                                <h4 class="text-base font-bold text-brand-warning flex items-center gap-2 mb-4">
+                                    <i class="fa-solid fa-circle-xmark animate-pulse"></i>
+                                    <span>현재 관절/상태 기준 피해야 할 운동</span>
+                                </h4>
+                                <div id="avoidExerciseList" class="space-y-4">
+                                    <!-- Dynamic items insert here -->
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Bottom Advice Row: Posture & Diet -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800">
+                            
+                            <!-- Lifestyle Advice -->
+                            <div class="space-y-3">
+                                <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-brand-secondary"></i>
+                                    <span>일상생활 습관 및 자세 교정 교시</span>
+                                </h4>
+                                <ul id="aiLifestyleList" class="space-y-2 text-xs text-slate-300 list-disc list-inside leading-relaxed">
+                                    <!-- Dynamic items insert -->
+                                </ul>
+                            </div>
+
+                            <!-- Expert Diet Tip -->
+                            <div class="bg-brand-black p-5 border border-slate-850 rounded-2xl">
+                                <h4 class="text-sm font-bold text-white flex items-center gap-2 mb-2">
+                                    <i class="fa-solid fa-utensils text-brand-accent"></i>
+                                    <span>목표 맞춤 영양 설계 꿀팁</span>
+                                </h4>
+                                <p id="aiDietTip" class="text-xs text-slate-300 leading-relaxed font-serif">
+                                    분석이 실행되면 최적의 지방연소/근비대 타겟 식단 팁이 도출됩니다.
+                                </p>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: Interactive Training Timer -->
+            <div id="tab-timer" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    
+                    <!-- Left Column: Workout Routine Selector & Library -->
+                    <div class="lg:col-span-4 space-y-6">
+                        <div class="bg-brand-card border border-slate-800 rounded-3xl p-6 shadow-xl">
+                            <h3 class="text-base font-bold text-white mb-4">루틴 실천 라이브러리</h3>
+                            <p class="text-xs text-slate-400 mb-4">아래 처방 운동 카드를 골라 우측의 세션 시뮬레이션 타이머에 직접 로드해 수행해 보세요.</p>
+                            
+                            <div class="space-y-3">
+                                <button onclick="loadExerciseToTimer('월 가이드 스쿼트', 40, '등을 벽에 바싹 대고 앉아 대퇴사두를 긴장시키되 무릎 가동성이 확보되는 구간까지 지지합니다.')" class="w-full text-left p-4 rounded-xl border border-slate-800 hover:border-brand-primary bg-brand-black hover:bg-slate-900/40 transition-all duration-300">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs font-bold text-brand-primary">월 가이드 스쿼트</span>
+                                        <span class="text-[10px] text-slate-500">40초 루틴</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400 mt-1 truncate">무릎 보존 하체 강화 및 기저 안장 안정도 증가</p>
+                                </button>
+
+                                <button onclick="loadExerciseToTimer('데드버그 (코어 재활)', 35, '하늘을 보고 누운 상태에서 팔다리를 교차 연장하여 허리의 굴곡 없이 코어를 단단히 결속합니다.')" class="w-full text-left p-4 rounded-xl border border-slate-800 hover:border-brand-primary bg-brand-black hover:bg-slate-900/40 transition-all duration-300">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs font-bold text-brand-secondary">데드버그 (코어 재활)</span>
+                                        <span class="text-[10px] text-slate-500">35초 루틴</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400 mt-1 truncate">허리 디스크 환자에게 안전한 최적의 복근 코어 운동</p>
+                                </button>
+
+                                <button onclick="loadExerciseToTimer('닐링 푸시업', 30, '무릎을 땅에 댄 채 가동 각도를 낮추어 손목과 척추가 압착되지 않도록 밀어냅니다.')" class="w-full text-left p-4 rounded-xl border border-slate-800 hover:border-brand-primary bg-brand-black hover:bg-slate-900/40 transition-all duration-300">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs font-bold text-brand-accent">닐링 푸시업</span>
+                                        <span class="text-[10px] text-slate-500">30초 루틴</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400 mt-1 truncate">어깨 충돌 및 손목 압박 부담을 낮춘 안전 프레스</p>
+                                </button>
+
+                                <button onclick="loadExerciseToTimer('글루트 브릿지', 45, '누운 상태로 엉덩이를 천천히 조여 골반 정렬을 세우며 둔근 자극에 타겟을 둡니다.')" class="w-full text-left p-4 rounded-xl border border-slate-800 hover:border-brand-primary bg-brand-black hover:bg-slate-900/40 transition-all duration-300">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs font-bold text-indigo-400">글루트 브릿지</span>
+                                        <span class="text-[10px] text-slate-500">45초 루틴</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400 mt-1 truncate">허리 보존과 고관절 신전 둔근 근력 강화</p>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Visual Timer Engine -->
+                    <div class="lg:col-span-8">
+                        <div class="bg-brand-card border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl text-center flex flex-col justify-between min-h-[450px]">
+                            
+                            <div>
+                                <span class="px-2.5 py-1 text-[10px] font-bold bg-slate-900 text-slate-400 rounded-full border border-slate-850">INTERACTIVE TRAINING SESSION</span>
+                                <h3 id="timerExerciseName" class="text-xl md:text-2xl font-bold mt-4 text-white">운동을 먼저 위에서 골라보세요</h3>
+                                <p id="timerExerciseGuide" class="text-xs text-slate-400 mt-2 max-w-lg mx-auto">라이브러리 목록에서 운동을 선택하여 루틴 수행 타이머를 가동할 수 있습니다.</p>
+                            </div>
+
+                            <!-- Big Timer Visual -->
+                            <div class="my-6 relative flex items-center justify-center">
+                                <svg class="w-48 h-48 md:w-56 md:h-56 transform -rotate-90">
+                                    <!-- Progress BG circle -->
+                                    <circle cx="96" cy="96" r="80" class="stroke-slate-900 fill-none" stroke-width="8" />
+                                    <!-- Progress active circle -->
+                                    <circle id="timerRing" cx="96" cy="96" r="80" class="stroke-brand-primary fill-none transition-all duration-100" stroke-width="8" stroke-dasharray="502" stroke-dashoffset="0" />
+                                </svg>
+                                <div class="absolute text-center">
+                                    <span id="timerCountdown" class="text-5xl md:text-6xl font-black text-white font-mono">00</span>
+                                    <span class="block text-xs uppercase tracking-widest text-slate-500 mt-1">SECONDS</span>
+                                </div>
+                            </div>
+
+                            <!-- Timer Action Buttons -->
+                            <div class="flex flex-col sm:flex-row justify-center items-center gap-3">
+                                <button id="timerPlayBtn" onclick="toggleTimer()" disabled class="w-full sm:w-auto px-8 py-3 bg-brand-primary text-black font-extrabold rounded-xl text-sm transition-all duration-300 hover:bg-emerald-400 shadow-md shadow-brand-primary/10 disabled:opacity-30 disabled:cursor-not-allowed">
+                                    <i class="fa-solid fa-play mr-1"></i> 운동 시작
+                                </button>
+                                <button onclick="resetTimer()" class="w-full sm:w-auto px-8 py-3 bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 rounded-xl text-sm transition-all duration-300">
+                                    초기화
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB 5: Progress Diary & Log History -->
+            <div id="tab-logs" class="tab-content hidden">
+                <div class="bg-brand-card border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
+                    <div class="flex flex-col sm:flex-row items-center justify-between border-b border-slate-800 pb-5 mb-6 gap-4">
+                        <div>
+                            <h2 class="text-xl md:text-2xl font-bold text-white font-sans">나의 피트니스 다이어리</h2>
+                            <p class="text-xs text-slate-400 mt-0.5">그날 달성한 운동 처방과 실제 상태 변화를 일기로 기록하여 꾸준히 관리합니다.</p>
+                        </div>
+                        <div class="text-xs text-brand-secondary font-mono">
+                            기록된 누적 세션: <span id="loggedCount" class="font-bold text-white">0</span>개
+                        </div>
+                    </div>
+
+                    <!-- Log Form & Previous History list Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        
+                        <!-- Log Insert Form -->
+                        <div class="lg:col-span-5 bg-brand-black border border-slate-850 p-5 rounded-2xl space-y-4">
+                            <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-pen-nib mr-1 text-brand-primary"></i> 오늘 자 수동 피트니스 등록</h3>
+                            
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-1 font-semibold">운동 시행일자</label>
+                                <input type="date" id="logDate" class="w-full bg-brand-card border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-brand-primary text-white">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 mb-1 font-semibold">체중 (kg)</label>
+                                    <input type="number" step="0.1" id="logWeight" placeholder="58.2" class="w-full bg-brand-card border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-brand-primary text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 mb-1 font-semibold">수행 시간 (분)</label>
+                                    <input type="number" id="logMinutes" value="25" class="w-full bg-brand-card border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-brand-primary text-white">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-1 font-semibold">수행한 핵심 운동 처방</label>
+                                <input type="text" id="logName" placeholder="월 가이드 스쿼트 3세트 완수" class="w-full bg-brand-card border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-brand-primary text-white">
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-1 font-semibold">오늘의 관절 컨디션 / 몸의 신호</label>
+                                <textarea id="logMemo" rows="2" placeholder="무릎 뒤쪽 찌르는 통증 전혀 없이 대퇴사두근에 안전한 자극을 느낌." class="w-full bg-brand-card border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-brand-primary text-white resize-none"></textarea>
+                            </div>
+
+                            <button onclick="addFitnessLog()" class="w-full py-2.5 bg-brand-primary hover:bg-emerald-400 text-black text-xs font-extrabold rounded-xl transition-all duration-300">
+                                다이어리에 기록 보관
+                            </button>
+                        </div>
+
+                        <!-- Previous Logs Grid -->
+                        <div class="lg:col-span-7 space-y-4">
+                            <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-list-ul mr-1 text-brand-secondary"></i> 지난 누적 세션 리스트</h3>
+                            
+                            <!-- Empty History alert -->
+                            <div id="logEmptyState" class="text-center py-12 bg-slate-900/50 rounded-2xl border border-dashed border-slate-800">
+                                <i class="fa-solid fa-folder-open text-3xl text-slate-700 mb-2"></i>
+                                <h4 class="text-xs text-slate-500">기록된 지난 운동 이력이 아직 존재하지 않습니다.</h4>
+                            </div>
+
+                            <div id="logContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[350px] overflow-y-auto pr-1 hidden">
+                                <!-- Dynamic logs -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="border-t border-slate-900 pt-6 mt-6 text-center text-xs text-slate-600">
+            <p>© 2026 BioFit AI. 이 시스템은 입력된 통증 정보에 기반하여 무릎/어깨의 안전 구간을 제안하는 보조 분석 프로그램입니다. 통증이 심각해지면 반드시 전문의 지도를 따르십시오.</p>
+            <p class="mt-1">Designed with HTML5 Web Audio Synthesis & Gemini AI Framework. Local Storage Enabled.</p>
+        </footer>
+
+    </div>
+
+    <!-- Custom Alert Toast Popup -->
+    <div id="alertToast" class="fixed bottom-6 right-6 z-50 bg-slate-900 border border-brand-primary px-5 py-3.5 rounded-2xl shadow-2xl backdrop-blur-md transform translate-y-10 opacity-0 transition-all duration-300 flex items-center space-x-3 pointer-events-none">
+        <i class="fa-solid fa-circle-check text-brand-primary text-lg animate-pulse"></i>
+        <span id="toastMessage" class="text-xs font-semibold text-white">피트니스 분석 알림</span>
+    </div>
+
+    <script>
+        // --- Web Audio Synthesizer Engine ---
+        let audioCtx = null;
+        let isSoundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Beautiful cosmic bell synthesize
+        function playTone(freq = 440, type = 'sine', duration = 0.5, volume = 0.15) {
+            if (!isSoundEnabled) return;
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const now = audioCtx.currentTime;
+            
+            // Primary tone
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, now);
+            
+            // Subtle vibrato
+            if (type === 'triangle') {
+                osc.frequency.exponentialRampToValueAtTime(freq / 2, now + duration);
+            }
+
+            gainNode.gain.setValueAtTime(volume, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start(now);
+            osc.stop(now + duration);
+        }
+
+        // Sound controller
+        function toggleAudioEngine() {
+            isSoundEnabled = !isSoundEnabled;
+            const icon = document.getElementById('soundIcon');
+            const btnText = document.querySelector('#soundToggleBtn span');
+            
+            if (isSoundEnabled) {
+                icon.className = 'fa-solid fa-volume-high text-brand-primary animate-bounce';
+                btnText.textContent = '효과음 켬';
+                initAudio();
+                playTone(523.25, 'sine', 0.6); // C5 chime
+                showToast("천상 피트니스 앰비언트 오디오 채널이 개방되었습니다.");
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-brand-warning';
+                btnText.textContent = '효과음 차단';
+                showToast("소리 알림이 음소거 처리되었습니다.");
+            }
+        }
+
+        // Tab management system
+        function switchMainTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('block');
+            });
+            document.getElementById(tabId).classList.remove('hidden');
+            document.getElementById(tabId).classList.add('block');
+
+            // Reset tab selectors styles
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 flex items-center space-x-2 bg-transparent border border-transparent text-slate-400 hover:text-slate-200";
+            });
+
+            // Highlight active button
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            if (activeBtn) {
+                let colorClass = 'brand-primary';
+                if (tabId === 'tab-dashboard') colorClass = 'brand-secondary';
+                if (tabId === 'tab-prescription') colorClass = 'brand-accent';
+                if (tabId === 'tab-timer') colorClass = 'yellow-500';
+                if (tabId === 'tab-logs') colorClass = 'indigo-400';
+                
+                activeBtn.className = `tab-btn active px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 flex items-center space-x-2 bg-brand-card border border-${colorClass}/30 text-white shadow-lg shadow-${colorClass}/5`;
+            }
+
+            playTone(440, 'sine', 0.2, 0.08); // Light click chime
+        }
+
+        // Custom Notification Toast
+        function showToast(message) {
+            const toast = document.getElementById('alertToast');
+            const msgSpan = document.getElementById('toastMessage');
+            msgSpan.textContent = message;
+            
+            toast.classList.remove('opacity-0', 'translate-y-10');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-10');
+            }, 3000);
+        }
+
+        // Global State variables
+        let bioProfile = {};
+        let logsList = [];
+
+        window.addEventListener('load', () => {
+            // Set default date for log
+            document.getElementById('logDate').valueAsDate = new Date();
+            
+            // Load logs
+            loadLogsFromLocalStorage();
+            renderLogsList();
+        });
+
+        // Main Form trigger
+        function handleProfileSubmit(event) {
+            event.preventDefault();
+
+            // Extract values
+            const gender = document.getElementById('userGender').value;
+            const age = parseInt(document.getElementById('userAge').value);
+            const height = parseFloat(document.getElementById('userHeight').value);
+            const weight = parseFloat(document.getElementById('userWeight').value);
+            
+            const activityLevel = parseFloat(document.getElementById('userActivity').value);
+            const goal = document.getElementById('userGoal').value;
+
+            // Optional body composition
+            let bodyFatInput = document.getElementById('userBodyFat').value;
+            let muscleInput = document.getElementById('userMuscle').value;
+
+            // Handle empty/optional
+            let bodyFat = bodyFatInput ? parseFloat(bodyFatInput) : calculateEstimatedBodyFat(gender, height, weight, age);
+            let muscle = muscleInput ? parseFloat(muscleInput) : calculateEstimatedMuscle(gender, weight, bodyFat);
+
+            // Fetch checked pain areas
+            const checkedPain = [];
+            document.querySelectorAll('input[name="painSpot"]:checked').forEach(cb => {
+                checkedPain.push(cb.value);
+            });
+
+            // Save inside State
+            bioProfile = {
+                gender, age, height, weight, bodyFat, muscle, activityLevel, goal, checkedPain
+            };
+
+            // 1. Instantly Calculate Metabolic Metrics
+            calculateAndRenderMetabolism(bioProfile);
+
+            // 2. Play success fanfares
+            playTone(261.63, 'sine', 0.2, 0.12); // C4
+            setTimeout(() => { playTone(329.63, 'sine', 0.2, 0.12); }, 100); // E4
+            setTimeout(() => { playTone(392.00, 'sine', 0.4, 0.12); }, 200); // G4
+
+            // 3. Fire Gemini AI Content Request
+            fetchAIWorkoutPlan(bioProfile);
+
+            // 4. Move to Metabolism view instantly
+            switchMainTab('tab-dashboard');
+            showToast("신체 데이터가 성공적으로 분석기로 전달되었습니다.");
+        }
+
+        // Fallbacks formulas for estimated body metrics
+        function calculateEstimatedBodyFat(gender, height, weight, age) {
+            const bmi = weight / ((height / 100) ** 2);
+            if (gender === 'male') {
+                return (1.20 * bmi) + (0.23 * age) - 16.2;
+            } else {
+                return (1.20 * bmi) + (0.23 * age) - 5.4;
+            }
+        }
+
+        function calculateEstimatedMuscle(gender, weight, bodyFat) {
+            const fatMass = weight * (bodyFat / 100);
+            const leanMass = weight - fatMass;
+            // Rough estimation of skeletal muscle from lean mass
+            return leanMass * (gender === 'male' ? 0.54 : 0.48);
+        }
+
+        // Render Metabolism & Diet
+        function calculateAndRenderMetabolism(profile) {
+            const { gender, age, height, weight, bodyFat, activityLevel, goal } = profile;
+
+            // 1. BMI
+            const bmi = weight / ((height / 100) ** 2);
+            document.getElementById('bmiVal').textContent = bmi.toFixed(1);
+
+            let bmiText = "정상 체중";
+            let bmiColor = "text-brand-primary";
+            if (bmi < 18.5) {
+                bmiText = "저체중";
+                bmiColor = "text-blue-400";
+            } else if (bmi >= 23 && bmi < 25) {
+                bmiText = "과체중";
+                bmiColor = "text-yellow-400";
+            } else if (bmi >= 25) {
+                bmiText = "경도 비만 이상";
+                bmiColor = "text-brand-warning";
+            }
+            const bmiBadge = document.getElementById('bmiClass');
+            bmiBadge.textContent = bmiText;
+            bmiBadge.className = `text-xs font-bold px-2 py-0.5 rounded bg-slate-900 ${bmiColor}`;
+
+            // 2. BMR (Mifflin-St Jeor Equation)
+            let bmr = 0;
+            if (gender === 'male') {
+                bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+            } else {
+                bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161;
+            }
+            document.getElementById('bmrVal').textContent = Math.round(bmr);
+
+            // 3. TDEE
+            const tdee = bmr * activityLevel;
+            document.getElementById('tdeeVal').textContent = Math.round(tdee);
+
+            // 4. Target Calories based on Goal
+            let targetKcal = tdee;
+            let goalDescription = "";
+            let macroRatios = { carbs: 0.5, protein: 0.3, fat: 0.2 }; // Carbs, Protein, Fat ratio
+
+            if (goal === 'loss') {
+                targetKcal = tdee * 0.82; // 18% deficit
+                goalDescription = "신체 목표가 체중 감량이므로, 하루 에너지 소모 균형 대비 안전한 18% 붉은 감량 폭을 처방하여 순지방 연소를 촉진합니다.";
+                macroRatios = { carbs: 0.4, protein: 0.35, fat: 0.25 };
+            } else if (goal === 'gain') {
+                targetKcal = tdee * 1.12; // 12% surplus
+                goalDescription = "신체 목표가 근매스 성장이므로, 점진적 과부하와 함께 안정적인 12% 열량 과잉 공급을 설계해 근섬유 재생에 영양소를 공급합니다.";
+                macroRatios = { carbs: 0.5, protein: 0.3, fat: 0.2 };
+            } else if (goal === 'posture') {
+                targetKcal = tdee; // Maintenance
+                goalDescription = "자세 교정 및 밸런스 회복에 초점이 맞춰져 있으므로 균형적인 등칼로리를 배정하여 체력을 안정시키고 관절 회복에 영양을 보탭니다.";
+                macroRatios = { carbs: 0.45, protein: 0.3, fat: 0.25 };
+            } else {
+                targetKcal = tdee * 0.95; // Small deficit
+                goalDescription = "기초 체력과 지구력 증가에 유리하도록 높은 산소 연소 계수에 초점을 두고 미량의 마이너스 칼로리 밸런스를 배정합니다.";
+                macroRatios = { carbs: 0.5, protein: 0.25, fat: 0.25 };
+            }
+
+            document.getElementById('targetKcal').textContent = Math.round(targetKcal);
+            document.getElementById('targetGoalText').textContent = goalDescription;
+
+            // 5. Calculate Macros in Grams
+            // Carbs: 4kcal/g, Protein: 4kcal/g, Fat: 9kcal/g
+            const carbsGrams = (targetKcal * macroRatios.carbs) / 4;
+            const proteinGrams = (targetKcal * macroRatios.protein) / 4;
+            const fatGrams = (targetKcal * macroRatios.fat) / 9;
+
+            document.getElementById('macroCarb').textContent = Math.round(carbsGrams);
+            document.getElementById('macroCarbKcal').textContent = Math.round(targetKcal * macroRatios.carbs);
+            document.getElementById('carbBar').style.width = `${macroRatios.carbs * 100}%`;
+
+            document.getElementById('macroProtein').textContent = Math.round(proteinGrams);
+            document.getElementById('macroProteinKcal').textContent = Math.round(targetKcal * macroRatios.protein);
+            document.getElementById('proteinBar').style.width = `${macroRatios.protein * 100}%`;
+
+            document.getElementById('macroFat').textContent = Math.round(fatGrams);
+            document.getElementById('macroFatKcal').textContent = Math.round(targetKcal * macroRatios.fat);
+            document.getElementById('fatBar').style.width = `${macroRatios.fat * 100}%`;
+        }
+
+        // Connect to Gemini API for customized dynamic athletic workout prescription
+        async function fetchAIWorkoutPlan(profile) {
+            const loadingPanel = document.getElementById('prescriptionLoading');
+            const dataPanel = document.getElementById('prescriptionData');
+            
+            // Show loading overlay
+            loadingPanel.classList.remove('hidden');
+
+            const queryText = `
+            사용자 바디 분석 프로필 데이터:
+            - 성별: ${profile.gender === 'male' ? '남성' : '여성'}
+            - 나이: ${profile.age}세
+            - 신장: ${profile.height}cm, 체중: ${profile.weight}kg
+            - 추정 체지방률: ${profile.bodyFat.toFixed(1)}%
+            - 추정 골격근량: ${profile.muscle.toFixed(1)}kg
+            - 피트니스 목표: ${profile.goal}
+            - 통증 및 특이 체질 부위 리스트: [${profile.checkedPain.join(', ')}]
+
+            위 조건과 특히 주의해야 할 "통증 및 특이 부위"를 바탕으로 전문 물리치료사 및 엘리트 스포츠 트레이너 입장에서 다음 JSON 포맷 구조로 1:1 맞춤형 피트니스 안전 처방을 구성해 주세요. 
+            반드시 다음 규격의 JSON 객체만 리턴하세요. 절대로 마크다운 가두리 기호나 부연 설명을 기재하지 마십시오.
+
+            원하는 JSON 구조:
+            {
+              "summary": "종합 체질 및 건강 상태 총평 (특히 어떤 관절 손상을 피해야 하는지 짚어주는 2-3줄 코멘트)",
+              "requiredExercises": [
+                {
+                  "name": "시급한 운동명 1",
+                  "reason": "이 운동이 해당 부위 통증 회피에 왜 필수적인지",
+                  "guide": "구체적인 수행 요령 가이드"
+                },
+                {
+                  "name": "시급한 운동명 2",
+                  "reason": "해당 타깃 가동 범위 확보를 위한 효능",
+                  "guide": "구체적인 수행 요령 가이드"
+                }
+              ],
+              "avoidExercises": [
+                {
+                  "name": "피해야 할 위험한 대표 운동 1",
+                  "reason": "사용자의 약점 관절 부위에 가하는 과도한 충격 요인 상세 설명"
+                },
+                {
+                  "name": "피해야 할 위험한 대표 운동 2",
+                  "reason": "척추나 관절을 무참히 손상시킬 수 있는 기전"
+                }
+              ],
+              "lifestyleTips": [
+                "평소 앉아있을 때 지켜야 할 주요 관절 중립 습관",
+                "통증 부위를 진정시키기 위한 가동성 스트레칭 습관"
+              ],
+              "dietTip": "목표에 최적화된 하루 3끼 타깃 한식 위주의 구체적인 건강 섭취 식단 팁"
+            }
+            `;
+
+            try {
+                // Call Gemini via Server endpoint (as guided in capabilities)
+                const apiKey = ""; // Left empty for automatic runtime injection
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: queryText }] }],
+                    generationConfig: {
+                        responseMimeType: "application/json"
+                    }
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error("API call failed");
+                }
+
+                const result = await response.json();
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                const parsedAI = JSON.parse(jsonText);
+
+                renderAIPrescription(parsedAI);
+
+            } catch (error) {
+                console.error("Failed to generate AI plan, running fallback algorithm...", error);
+                // Graceful rule-based offline analysis generator (as fallback)
+                const offlineResult = generateRuleBasedFallback(profile);
+                renderAIPrescription(offlineResult);
+            } finally {
+                // Transition loading
+                loadingPanel.classList.add('hidden');
+            }
+        }
+
+        // Rich rule-based fallback generation for stable offline service
+        function generateRuleBasedFallback(profile) {
+            const hasKnee = profile.checkedPain.some(p => p.includes('무릎'));
+            const hasBack = profile.checkedPain.some(p => p.includes('허리'));
+            const hasWrist = profile.checkedPain.some(p => p.includes('손목'));
+
+            let summary = `현재 약점 관절 [${profile.checkedPain.join(', ')}]을 철저히 보호하는 관절 가동성 보존 필터링이 적용되었습니다. `;
+            
+            const reqEx = [];
+            const avoidEx = [];
+            const lifestyle = [];
+            let dietTip = "";
+
+            if (hasKnee) {
+                summary += "무릎에 전단력이 실리는 과도한 슬관절 굴곡은 일체 봉쇄하고, 대퇴사두를 벽에 기대어 동원하는 등척성 고정 훈련을 수행해야 안전합니다.";
+                reqEx.push({
+                    name: "벽 스쿼트 (Wall Sit)",
+                    reason: "무릎 슬개골 연골판에 축 방향 비틀림이나 하중 손상을 가하지 않고 허벅지 근력을 기릅니다.",
+                    guide: "벽에 등을 평평하게 붙이고 엉덩이를 무릎 높이보다 높게 두고 30초 동안 굳건히 자세를 버팁니다."
+                });
+                reqEx.push({
+                    name: "고관절 브릿지 (Glute Bridge)",
+                    reason: "슬관절을 밀어내지 않고 후방 사슬인 둔근을 고립시켜 무릎의 충격 흡수를 골반이 대신 분담하게 돕습니다.",
+                    guide: "바닥에 등을 대고 누운 뒤 뒤꿈치 힘으로 골반을 일직선이 될 때까지 들어 올려 주십시오."
+                });
+                avoidEx.push({
+                    name: "과도한 고중량 바벨 스쿼트",
+                    reason: "슬관절의 불안정성이 해결되기 전에 수직 하중이 얹어지면 십자 인대 및 반월상 연골이 마찰되며 상처를 입습니다."
+                });
+                avoidEx.push({
+                    name: "계단 오르내리기 & 과격한 조깅",
+                    reason: "체중의 3~5배에 달하는 불규칙한 충격량이 연골 부위에 지속적으로 축적될 수 있습니다."
+                });
+                lifestyle.push("계단을 하강할 때는 발목 측면을 짚거나 엘리베이터를 가급적 이용하여 무릎 연골의 미세 마모를 방지하십시오.");
+            }
+
+            if (hasBack) {
+                summary += " 요추의 굴곡을 유발하는 코어 크런치 동작은 디스크 압박을 가중하므로 등속성 중립 자세를 지지하는 처방이 우선됩니다.";
+                reqEx.push({
+                    name: "플랭크 코어 결속 (Plank)",
+                    reason: "허리 요추의 인위적 구부림 없이 척추 주변 다열근과 기립근을 곧게 묶는 우수한 코어 훈련입니다.",
+                    guide: "양 팔꿈치를 바닥에 대고 엉덩이가 처지거나 높지 않도록 수평을 유지해 25초간 호흡을 유지합니다."
+                });
+                reqEx.push({
+                    name: "버드독 (Bird Dog)",
+                    reason: "척추 축 정렬을 흔들지 않으면서 등과 엉덩이 근육의 상호 유기적 보정을 기릅니다.",
+                    guide: "네발기기 자세에서 대각선 방향의 팔다리를 천천히 들고 5초간 중립을 버틴 뒤 번갈아 수행합니다."
+                });
+                avoidEx.push({
+                    name: "크런치 & 싯업 (Crunches & Sit-ups)",
+                    reason: "요추를 구부정하게 안쪽으로 마는 힘은 디스크 내부의 수핵을 등 쪽 신경계로 강하게 분출하게 만듭니다."
+                });
+                avoidEx.push({
+                    name: "바벨 데드리프트 (Deadlift)",
+                    reason: "정확한 힙 힌지 정렬이 나오기 전에 허리로 고중량을 드는 습관은 요추 전만을 단번에 무너뜨립니다."
+                });
+                lifestyle.push("일할 때 엉덩이를 등받이 구석까지 밀착해 앉으며 50분 수행마다 5분 동안 일어나 골반 주변을 풀고 가볍게 보행하십시오.");
+            }
+
+            // Standard placeholders if nothing specific checked
+            if (reqEx.length === 0) {
+                reqEx.push({
+                    name: "맨몸 가이드 런지",
+                    reason: "골반 불균형과 좌우 지지 밸런스를 균등하게 복원합니다.",
+                    guide: "보폭을 충분히 뒤로 밀어준 뒤 양 무릎이 수평 90도가 되도록 곧게 가라앉았다가 일어납니다."
+                });
+                avoidEx.push({
+                    name: "고정되지 않은 프리웨이트 난동",
+                    reason: "골격 정렬이 없는 상태의 격렬한 가속은 관절에 미세 전단을 야기합니다."
+                });
+                lifestyle.push("바른 기립 및 척추 중립 세우기를 온전히 유지하세요.");
+            }
+
+            dietTip = profile.goal === 'loss' ? 
+                "식이섬유 중심의 쌈채소와 닭안심살, 소고기 홍두깨살, 복합 탄수화물인 귀리밥(150g) 위주로 가급적 저염식 한식 세팅을 고수하세요." :
+                "달걀 3구 및 두부 반 모, 현미밥 식단을 균형적으로 배부르게 섭취하여 순근육 재생 단백질과 에너지 대사를 가꾸어 갑니다.";
+
+            return {
+                summary,
+                requiredExercises: reqEx,
+                avoidExercises: avoidEx,
+                lifestyleTips: lifestyle,
+                dietTip
+            };
+        }
+
+        // Render received or generated AI prescription to target cards
+        function renderAIPrescription(data) {
+            document.getElementById('aiSummary').textContent = data.summary;
+
+            // Required list
+            const reqContainer = document.getElementById('requiredExerciseList');
+            reqContainer.innerHTML = "";
+            data.requiredExercises.forEach(ex => {
+                const item = document.createElement('div');
+                item.className = "bg-brand-black/60 p-4 border border-slate-850 rounded-xl space-y-1.5";
+                item.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2 h-2 rounded-full bg-brand-primary"></span>
+                        <h5 class="text-xs font-black text-white">${ex.name}</h5>
+                    </div>
+                    <p class="text-[11px] text-slate-300 leading-snug"><strong class="text-brand-secondary">필요 이유:</strong> ${ex.reason}</p>
+                    <p class="text-[10px] text-slate-400 font-serif leading-relaxed"><strong class="text-slate-500">수행 방법:</strong> ${ex.guide}</p>
+                `;
+                reqContainer.appendChild(item);
+            });
+
+            // Avoid list
+            const avoidContainer = document.getElementById('avoidExerciseList');
+            avoidContainer.innerHTML = "";
+            data.avoidExercises.forEach(ex => {
+                const item = document.createElement('div');
+                item.className = "bg-brand-black/60 p-4 border border-slate-850 rounded-xl space-y-1.5";
+                item.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2 h-2 rounded-full bg-brand-warning"></span>
+                        <h5 class="text-xs font-black text-white">${ex.name}</h5>
+                    </div>
+                    <p class="text-[11px] text-slate-300 leading-snug"><strong class="text-brand-warning">피해야 하는 위험성:</strong> ${ex.reason}</p>
+                `;
+                avoidContainer.appendChild(item);
+            });
+
+            // Lifestyle list
+            const lifeContainer = document.getElementById('aiLifestyleList');
+            lifeContainer.innerHTML = "";
+            data.lifestyleTips.forEach(tip => {
+                const li = document.createElement('li');
+                li.textContent = tip
